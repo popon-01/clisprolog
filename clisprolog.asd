@@ -6,5 +6,7 @@
   :license "Specify license here"
   :serial t
   :components ((:file "package")
-               (:file "clisprolog")))
+               (:file "util")
+               (:file "clisprolog"))
+  :depends-on (:alexandria :split-sequence :iterate))
 
