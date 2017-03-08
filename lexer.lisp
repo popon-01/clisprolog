@@ -18,7 +18,7 @@
                    (t (rec str (cdr op-list))))))
     (rec str *operators*)))
 
-(defmacro go-down-parse (rec str)
+(defmacro go-down-tokenize (rec str)
   (with-gensyms (gsucc grest)
     `(multiple-value-bind (,gsucc ,grest) (,rec (str-tail ,str))
        (values (concatenate
@@ -30,7 +30,7 @@
   (cond ((empty-str-p str) (values str ""))
         ((not (operand-char-p (head-char str)))
          (values "" str))
-        (t (go-down-parse get-atom str))))
+        (t (go-down-tokenize get-atom str))))
 
 (defun get-quote-atom (str)
   (labels ((rec (str)
@@ -39,8 +39,8 @@
                    ((char= (head-char str) #\')
                     (values (str-head str)
                             (str-tail str)))
-                   (t (go-down-parse rec str)))))
-    (go-down-parse rec str)))
+                   (t (go-down-tokenize rec str)))))
+    (go-down-tokenize rec str)))
 
 
 (defun get-var (str)
@@ -48,8 +48,8 @@
              (cond ((empty-str-p str) (values str ""))
                    ((not (operand-char-p (head-char str)))
                     (values "" str))
-                   (t (go-down-parse rec str)))))
-    (go-down-parse rec str)))
+                   (t (go-down-tokenize rec str)))))
+    (go-down-tokenize rec str)))
 
 (defun get-number (str)
   (let ((haspoint nil))
@@ -57,16 +57,17 @@
                (cond ((empty-str-p str)
                       (values str ""))
                      ((char= (head-char str) #\.)
-                      (cond ((not (and (empty-str-p (str-tail str))
-                                       (number-char-p
-                                        (head-char (str-tail str)))))
+                      (cond ((or (empty-str-p (str-tail str))
+                                 (not (number-char-p
+                                       (head-char (str-tail str)))))
                              (values "" str))
                             (haspoint
                              (error "parse error: multiple decimal points"))
                             (t (setf haspoint t)
-                               (go-down-parse rec str))))
-                     ((not (number-char-p (head-char str)))
-                      (go-down-parse rec str)))))
+                               (go-down-tokenize rec str))))
+                     ((number-char-p (head-char str))
+                      (go-down-tokenize rec str))
+                     (t (values "" str)))))
       (rec str))))
 
 (defun get-op (str)
@@ -106,4 +107,5 @@
 (defun lexer (path)
   (with-open-file (in path)
     (iter (for line in-stream in using #'read-line)
-          (collect (string-to-token line)))))
+          ;;(collect (string-to-token line)))))
+          (nconcing (string-to-token line)))))

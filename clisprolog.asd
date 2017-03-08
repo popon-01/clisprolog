@@ -7,6 +7,7 @@
   :serial t
   :components ((:file "package")
                (:file "util")
+               (:file "lexer")
                (:file "clisprolog"))
   :depends-on (:alexandria :split-sequence :iterate))
 
