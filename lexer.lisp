@@ -87,7 +87,7 @@
       :operator :atom))
 
 (defun op-info(op)
-  (let ((special-op-list '("(" :lparen ")" :rpalen
+  (let ((special-op-list '("(" :lparen ")" :rparen
                            "[" :lbracket "]" :rbracket
                            "," :comma "." :period
                            "|" :pipe ";" :semicolon)))
