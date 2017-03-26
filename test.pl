@@ -1,7 +1,7 @@
 conc([],L,L).
 length ([_, Tail], N) :-
   length(Tail, N1),
-  N is N1 + 1.
+  N is N1 + 1 - 2.
 conc([X | L1], Y, [X, L2]) :- conc(L1, Y, L2).
 
 

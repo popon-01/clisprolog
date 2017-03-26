@@ -25,7 +25,7 @@
   (format nil "Var(~A)" (name var)))
 
 (define-class prolog-op (prolog-value)
-  name)
+  name rank assoc-type)
 (defmethod prolog-value-str ((op prolog-op))
   (format nil "Op(~A)" (name op)))
 
@@ -46,4 +46,7 @@
   (format nil "Period"))
 
 
-
+(defun operand-p (term)
+  (not (find (type-of term)
+             '(prolog-op prolog-period)
+             :test #'eq)))

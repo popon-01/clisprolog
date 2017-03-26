@@ -3,18 +3,18 @@
 (defmacro go-down-read (obj rest type)
   (with-gensyms (gtail grest)
     `(multiple-value-bind (,gtail ,grest)
-         (read-tokens ,rest ,type)
+         (reader ,rest ,type)
        (values (cons ,obj ,gtail) ,grest))))
 
 (defun read-paren (tokens type)
   (multiple-value-bind (lst next)
-      (read-tokens (cdr tokens) :paren)
+      (reader (cdr tokens) :paren)
     (go-down-read (make-instance 'prolog-paren :value lst)
                   next type)))
 
 (defun read-list (tokens type)
   (multiple-value-bind (lst next)
-      (read-tokens (cdr tokens) :bracket)
+      (reader (cdr tokens) :bracket)
     (go-down-read (make-instance 'prolog-list :value lst)
                   next type)))
 
@@ -22,7 +22,7 @@
   (if (eq type :global)
       (go-down-read (make-instance 'prolog-op :name ",")
                     (cdr tokens) type)
-      (read-tokens (cdr tokens) type)))
+      (reader (cdr tokens) type)))
 
 (defun read-atom (tokens type)
   (let ((name (first (car tokens))))
@@ -31,7 +31,7 @@
         (go-down-read (make-instance 'prolog-atom :name name)
                       (cdr tokens) type)
         (multiple-value-bind (lst next)
-            (read-tokens (cddr tokens) :paren)
+            (reader (cddr tokens) :paren)
           (go-down-read (make-instance 'prolog-pred
                                        :name name
                                        :args lst)
@@ -49,7 +49,7 @@
       (:variable (make-instance 'prolog-var :name tok))
       (:operator (make-instance 'prolog-op :name tok)))))
 
-(defun read-tokens (tokens type)
+(defun reader (tokens type)
   (if (null tokens)
       (if (eq type :global)
           (values nil nil)
@@ -70,4 +70,4 @@
 
 (defun test-read (path)
   (mapc (lambda (val) (print (prolog-value-str val)))
-        (read-tokens (lexer path) :global)))
+        (reader (lexer path) :global)))

@@ -21,9 +21,13 @@
 (defun str-tail (str)
   (subseq str 1))
 
+(defmacro if-not (test-form else-form then-form)
+  `(if ,test-form ,then-form ,else-form))
+
 (defmacro aif (test-form then-form &optional else-form)
   `(let ((it ,test-form))
      (if it ,then-form ,else-form)))
+
 
 (defmacro define-class (class-name parent  &rest res)
   `(defclass ,class-name ,parent
