@@ -6,7 +6,7 @@
 (define-class prolog-pred (prolog-value)
   name args)
 (defmethod prolog-value-str ((pred prolog-pred))
-  (format nil "Pred(~A(~A))" (name pred) (mapcar #'prolog-value-str
+  (format nil "Pred(~A(~{~a~^,~}))" (name pred) (mapcar #'prolog-value-str
                                                    (args pred))))
 
 (define-class prolog-num (prolog-value)
@@ -32,7 +32,7 @@
 (define-class prolog-list (prolog-value)
   value)
 (defmethod prolog-value-str ((lst prolog-list))
-  (format nil "List(~A)" (mapcar #'prolog-value-str
+  (format nil "List(~{~a~^,~})" (mapcar #'prolog-value-str
                                  (value lst))))
 
 (define-class prolog-paren (prolog-value)

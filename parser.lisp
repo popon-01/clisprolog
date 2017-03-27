@@ -1,5 +1,6 @@
 (in-package :clisprolog)
 
+
 (let ((oprank-list nil))
   (defun parser (terms)
     (iterate (for op in *op-defs*)
@@ -9,7 +10,6 @@
                            (delete-if (lambda (x) (= (car x) (rank op)))
                                       oprank-list)))))
     (setf oprank-list (sort oprank-list #'> :key #'car))
-    (print oprank-list)
     (main-parser terms))
   (defun main-parser (terms)
     (if (null terms) nil
@@ -17,8 +17,7 @@
             (sub-parser oprank-list terms)
           (if-not (eq (type-of (car rest)) 'prolog-period)
                   (error "parse-error ~A" (prolog-value-str (car rest)))
-                  (progn (dump-ast ast)
-                         (cons ast (main-parser (cdr rest)))))))))
+                  (cons ast (main-parser (cdr rest))))))))
 
 (defun sub-parser (opdef-list terms)
   (if (null opdef-list)
@@ -106,5 +105,10 @@
 
 (defun parse-test (path)
   (mapc (lambda (ast) (dump-ast ast))
-        (parser (reader (lexer path) :global)))
+        (parser (make-terms path)))
+  nil)
+
+(defun parse-test-from-string (str)
+  (mapc (lambda (ast) (dump-ast ast))
+        (parser (make-terms-from-string str)))
   nil)

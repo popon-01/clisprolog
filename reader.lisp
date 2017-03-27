@@ -1,73 +1,109 @@
 (in-package :clisprolog)
 
-(defmacro go-down-read (obj rest type)
-  (with-gensyms (gtail grest)
-    `(multiple-value-bind (,gtail ,grest)
-         (reader ,rest ,type)
-       (values (cons ,obj ,gtail) ,grest))))
+(let ((lexer nil)
+      (hold nil))
+  (defun make-reader (path)
+    (setf lexer (make-lexer path))
+    (lambda () (get-term :global)))
 
-(defun read-paren (tokens type)
-  (multiple-value-bind (lst next)
-      (reader (cdr tokens) :paren)
-    (go-down-read (make-instance 'prolog-paren :value lst)
-                  next type)))
+  (defun make-reader-from-string (str)
+    (setf lexer (make-lexer-from-string str))
+    (lambda () (get-term :global)))
 
-(defun read-list (tokens type)
-  (multiple-value-bind (lst next)
-      (reader (cdr tokens) :bracket)
-    (go-down-read (make-instance 'prolog-list :value lst)
-                  next type)))
+  (defun read-token ()
+    (if (null hold)
+        (funcall lexer) (pop hold)))
+  
+  (defun get-term (context)
+    (let ((token (read-token)))
+      (if (null token)
+          (if (eq context :global)
+              nil (error "paren unmatch"))
+          (case (second token)
+            (:lparen
+             (make-instance 'prolog-paren
+                            :value (read-block :paren)))
+            (:rparen
+             (if (eq context :paren)
+                 (progn (push token hold) nil)
+                 (error "paren unmatch")))
+            (:lbracket
+             (make-instance 'prolog-list
+                            :value (read-block :list)))
+            (:rbracket
+             (if (eq context :list)
+                 (progn (push token hold) nil)
+                 (error "paren unmatch")))
+            (:atom
+             (read-atom token))
+            (:comma
+             (if (eq context :global)
+                 (make-instance 'prolog-op :name ",")
+                 (error "multiple separator")))
+            (otherwise
+             (make-value token))))))
 
-(defun read-comma (tokens type)
-  (if (eq type :global)
-      (go-down-read (make-instance 'prolog-op :name ",")
-                    (cdr tokens) type)
-      (reader (cdr tokens) type)))
+  (defun read-block (context)
+    (let ((term (get-term context))
+          (next (read-token)))
+      (case (second next)
+        (:rparen
+         (if (eq context :paren)
+             (if (null term)
+                 nil (list term))
+             (error "paren unmatch")))
+        (:rbracket
+         (if (eq context :list)
+             (if (null term)
+                 nil (list term))
+             (error "paren unmatch")))
+        (:comma
+         (cons term (read-block context)))
+        (otherwise
+         (push next hold)
+         (cons term (read-block context))))))
 
-(defun read-atom (tokens type)
-  (let ((name (first (car tokens))))
-    (if (or (null (cdr tokens))
-            (not (eq (second (second tokens)) :lparen)))
-        (go-down-read (make-instance 'prolog-atom :name name)
-                      (cdr tokens) type)
-        (multiple-value-bind (lst next)
-            (reader (cddr tokens) :paren)
-          (go-down-read (make-instance 'prolog-pred
-                                       :name name
-                                       :args lst)
-                        next type)))))
+  (defun read-atom (token)
+    (let ((name (first token))
+          (next (read-token)))
+      (if (or (null next)
+              (not (eq (second next) :lparen)))
+          (progn
+            (push next hold)
+            (make-instance 'prolog-atom :name name))
+          (make-instance 'prolog-pred
+                         :name name :args (read-block :paren)))))
 
-(defun make-value (token)
-  (let ((tok (first token))
-        (tag (second token)))
-    (case tag
-      (:period (make-instance 'prolog-period))
-      (:semicolon (make-instance 'prolog-op :name ";"))
-      (:pipe (make-instance 'prolog-op :name "|"))
-      (:number (make-instance 'prolog-num
-                              :value (read-from-string tok)))
-      (:variable (make-instance 'prolog-var :name tok))
-      (:operator (make-instance 'prolog-op :name tok)))))
-
-(defun reader (tokens type)
-  (if (null tokens)
-      (if (eq type :global)
-          (values nil nil)
-          (error "unclosed paren or blacket"))
-      (case (second (car tokens))
-        (:lparen (read-paren tokens type))
-        (:lbracket (read-list tokens type))
-        (:rparen (if (eq type :paren)
-                     (values nil (cdr tokens))
-                     (error "paren unmatch")))
-        (:rbracket (if (eq type :bracket)
-                       (values nil (cdr tokens))
-                       (error "bracket unmatch")))
-        (:comma (read-comma tokens type))
-        (:atom (read-atom tokens type))
-        (t (go-down-read (make-value (car tokens))
-                         (cdr tokens) type)))))
+  (defun make-value (token)
+    (let ((tok (first token))
+          (tag (second token)))
+      (case tag
+        (:period (make-instance 'prolog-period))
+        (:semicolon (make-instance 'prolog-op :name ";"))
+        (:pipe (make-instance 'prolog-op :name "|"))
+        (:number (make-instance 'prolog-num
+                                :value (read-from-string tok)))
+        (:variable (make-instance 'prolog-var :name tok))
+        (:operator (make-instance 'prolog-op :name tok))))))
+  
 
 (defun test-read (path)
   (mapc (lambda (val) (print (prolog-value-str val)))
         (reader (lexer path) :global)))
+
+
+(defun make-terms (path)
+  (let ((reader (make-reader path)))
+    (labels ((rec ()
+               (let ((token (funcall reader)))
+                 (when token
+                   (cons token (rec))))))
+      (rec))))
+  
+(defun make-terms-from-string (str)
+  (let ((reader (make-reader-from-string str)))
+    (labels ((rec ()
+               (let ((token (funcall reader)))
+                 (when token
+                   (cons token (rec))))))
+      (rec))))
