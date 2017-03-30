@@ -15,9 +15,9 @@
   (format nil "Num(~A)" (value num)))
 
 (define-class prolog-atom (prolog-value)
-  name)
+  value)
 (defmethod prolog-value-str ((atom prolog-atom))
-  (format nil "Atom(~A)" (name atom)))
+  (format nil "Atom(~A)" (value atom)))
 
 (define-class prolog-var (prolog-value)
   name)

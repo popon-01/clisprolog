@@ -12,6 +12,7 @@
                (:file "lexer")
                (:file "reader")
                (:file "parser")
+               (:file "unify")
                (:file "clisprolog"))
   :depends-on (:alexandria :split-sequence :iterate))
 

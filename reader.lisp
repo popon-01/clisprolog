@@ -70,7 +70,7 @@
               (not (eq (second next) :lparen)))
           (progn
             (push next hold)
-            (make-instance 'prolog-atom :name name))
+            (make-instance 'prolog-atom :value name))
           (make-instance 'prolog-pred
                          :name name :args (read-block :paren)))))
 
