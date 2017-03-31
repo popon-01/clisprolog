@@ -95,15 +95,15 @@
 (defun make-terms (path)
   (let ((reader (make-reader path)))
     (labels ((rec ()
-               (let ((token (funcall reader)))
-                 (when token
-                   (cons token (rec))))))
+               (let ((term (funcall reader)))
+                 (when term
+                   (cons term (rec))))))
       (rec))))
   
 (defun make-terms-from-string (str)
   (let ((reader (make-reader-from-string str)))
     (labels ((rec ()
-               (let ((token (funcall reader)))
-                 (when token
-                   (cons token (rec))))))
+               (let ((term (funcall reader)))
+                 (when term
+                   (cons term (rec))))))
       (rec))))

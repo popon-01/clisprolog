@@ -1,8 +1,12 @@
 (in-package :clisprolog)
 
-
 (let ((oprank-list nil))
-  (defun parser (terms)
+  (defun parse (path)
+    (parse-terms (make-terms path)))
+  (defun parse-from-string (str)
+    (parse-terms (make-terms-from-string str)))
+  
+  (defun parse-terms (terms)
     (iterate (for op in *op-defs*)
              (let ((entry (assoc (rank op) oprank-list)))
                (setf oprank-list

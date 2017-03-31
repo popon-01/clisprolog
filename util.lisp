@@ -21,12 +21,24 @@
 (defun str-tail (str)
   (subseq str 1))
 
+(defun get-keysym (name)
+  (intern name 'keyword))
+
 (defmacro if-not (test-form else-form then-form)
   `(if ,test-form ,then-form ,else-form))
 
 (defmacro aif (test-form then-form &optional else-form)
   `(let ((it ,test-form))
      (if it ,then-form ,else-form)))
+
+(defmacro push-back (obj place)
+  (with-gensyms (gprev)
+    `(let ((,gprev ,place))
+       (setf ,place (append ,gprev (list ,obj))))))
+
+(defmacro string-case (str &rest body)
+  `(cond ,@(mapcar (lambda (x) `((string= ,str ,(car x)) ,@(cdr x)))
+                   body)))
 
 
 (defmacro define-class (class-name parent  &rest res)

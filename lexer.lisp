@@ -1,7 +1,7 @@
 (in-package :clisprolog)
 
 (defvar *operators* '("+" "-" "*" "/" ":-"
-                      "=" "==" "===" "<" ">"
+                      "=" "=:=" "=\=" "<" ">"
                       "." "(" ")" "," "[" "]" "|"))
 
 (defun operand-char-p (char)
@@ -92,7 +92,7 @@
         (rec))))
   
   (defun get-op ()
-    (let ((head (read-head)))  
+    (let ((head (read-head)))
       (labels
           ((rec (op-list)
              (cond ((null op-list)
@@ -109,24 +109,27 @@
   (defun get-token ()
     (if-not (open-stream-p in) nil
             (let ((head (read-head)))
-              (unless (null head)
-                (push head hold)
-                (cond ((lower-char-p head)
-                       (let ((tok (get-symbol)))
-                         (list tok (atom-info tok))))
-                      ((char= head #\')
-                       (list (get-quote-atom) :atom))
-                      ((or (upper-char-p head)
-                           (char= head #\_))
-                       (list (get-symbol) :variable))
-                      ((number-char-p head)
-                       (list (get-number) :number))
-                      ((begin-op-p head)
-                       (let ((tok (get-op)))
-                         (list tok (op-info tok))))
-                      ((find head '(#\  #\newline))
-                       (pop hold) (get-token))
-                      (t (error "read error ~A~%" (string head)))))))))
+              (if (null head)
+                  (progn
+                    (close in) nil)
+                  (progn
+                    (push head hold)
+                    (cond ((lower-char-p head)
+                           (let ((tok (get-symbol)))
+                             (list tok (atom-info tok))))
+                          ((char= head #\')
+                           (list (get-quote-atom) :atom))
+                          ((or (upper-char-p head)
+                               (char= head #\_))
+                           (list (get-symbol) :variable))
+                          ((number-char-p head)
+                           (list (get-number) :number))
+                          ((begin-op-p head)
+                           (let ((tok (get-op)))
+                             (list tok (op-info tok))))
+                          ((find head '(#\  #\newline))
+                           (pop hold) (get-token))
+                          (t (error "read error ~A~%" (string head))))))))))
 
 (defun make-lexer-test (path)
   (let ((lex (make-lexer path)))

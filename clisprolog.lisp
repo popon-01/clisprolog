@@ -1,3 +1,30 @@
 (in-package :clisprolog)
 
+(defun load-prolog-file (path)
+  (setf *fact/rule-table* (make-hash-table))
+  (exec-ast-list (parse path)))
 
+(defun launch-prolog-repl ()
+  (labels ((show-res (gen)
+             (multiple-value-bind (res find) (funcall gen)
+               (if-not find
+                       (format t "No.~%")
+                       (progn
+                         (format t "Yes.~%")
+                         (dump-bind res)
+                         (if (string= (read-line) ";")
+                             (show-res gen) nil)))))
+           (single-loop (str)
+             (let ((ast (parse-from-string str)))
+               (if-not (= (length ast) 1)
+                       (format t "cannnot input multiple sentense.~%")
+                       (show-res (gen-ast-prove (first ast)))))))
+    (format t "?- ")
+    (let ((input (read-line)))
+      (unless (string= input "exit.")
+        (single-loop input)
+        (launch-prolog-repl)))))
+
+(defun launch-prolog-repl-with-file (path)
+  (load-prolog-file path)
+  (launch-prolog-repl))

@@ -3,6 +3,11 @@
 (defun instanced-p (arg)
   (find (type-of arg) '(prolog-atom prolog-num)))
 
+(defun dump-bind (bind)
+  (iterate (for b in bind)
+           (format t  "~A -> ~A~%"
+                   (string (car b)) (prolog-value-str (cdr b)))))
+
 (defun apply-bind (ast bind)
   (cond ((listp ast)
          (mapcar (lambda (x) (apply-bind x bind)) ast))
